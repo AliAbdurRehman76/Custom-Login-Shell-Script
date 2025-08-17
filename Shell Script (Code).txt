@@ -1,0 +1,112 @@
+#!/bin/bash
+# ~/.custom_login.sh
+# Custom login shell script
+
+# Configuration file location
+CONFIG_FILE="$HOME/.login_config"
+
+# Load user configuration if exists
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        source "$CONFIG_FILE"
+    else
+        # Default configuration
+        SHOW_SYS_INFO=true
+        SHOW_QUOTE=true
+        SHOW_MOTD=true
+        CUSTOM_GREETING=""
+    fi
+}
+
+# System information display
+show_system_info() {
+    if [ "$SHOW_SYS_INFO" = true ]; then
+        echo -e "\n\033[1;34m===== SYSTEM INFORMATION =====\033[0m"
+        
+        # CPU usage
+        cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
+        echo -e "CPU Usage:\t$cpu_usage"
+        
+        # Memory usage
+        memory_info=$(free -m | awk 'NR==2{printf "%.2f%% of %sMB", $3*100/$2, $2}')
+        echo -e "Memory Usage:\t$memory_info"
+        
+        # Disk usage
+        disk_usage=$(df -h / | awk 'NR==2{print $5}')
+        echo -e "Root Disk:\t$disk_usage used"
+        
+        # Uptime
+        uptime_info=$(uptime -p)
+        echo -e "System Uptime:\t$uptime_info"
+        
+        # Active users
+        users=$(who | wc -l)
+        echo -e "Active Users:\t$users"
+    fi
+}
+
+# Fortune cookie feature
+show_random_quote() {
+    if [ "$SHOW_QUOTE" = true ]; then
+        echo -e "\n\033[1;35m===== FORTUNE COOKIE =====\033[0m"
+        
+        # Array of quotes/tips
+        quotes=(
+            "The only way to do great work is to love what you do. - Steve Jobs"
+            "Stay hungry, stay foolish. - Steve Jobs"
+            "Your time is limited, don't waste it living someone else's life. - Steve Jobs"
+            "Linux is user-friendly. It's just very particular about who its friends are. - Unknown"
+            "The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge. - Stephen Hawking"
+            "First, solve the problem. Then, write the code. - John Johnson"
+            "Measuring programming progress by lines of code is like measuring aircraft building progress by weight. - Bill Gates"
+            "The best way to predict the future is to implement it. - David Heinemeier Hansson"
+        )
+        
+        # Select random quote
+        random_index=$((RANDOM % ${#quotes[@]}))
+        echo -e "\033[1;33m${quotes[$random_index]}\033[0m"
+    fi
+}
+
+# Message of the day
+show_motd() {
+    if [ "$SHOW_MOTD" = true ] && [ -f "/etc/motd" ]; then
+        echo -e "\n\033[1;36m===== MESSAGE OF THE DAY =====\033[0m"
+        cat /etc/motd
+    fi
+}
+
+# Main function
+main() {
+    # Load user configuration
+    load_config
+    
+    # Clear screen
+    clear
+    
+    # Welcome message
+    if [ -n "$CUSTOM_GREETING" ]; then
+        echo -e "\033[1;32m$CUSTOM_GREETING\033[0m"
+    else
+        echo -e "\033[1;32mWelcome back, $(whoami)!\033[0m"
+    fi
+    
+    echo -e "Today is $(date '+%A, %B %d, %Y')"
+    echo -e "Current time: $(date '+%H:%M:%S')"
+    
+    # Show system information
+    show_system_info
+    
+    # Show random quote
+    show_random_quote
+    
+    # Show MOTD
+    show_motd
+    
+    # Show last login
+    echo -e "\n\033[1;37mLast login:\033[0m"
+    last -1 $(whoami) | head -n 1 | awk '{print "From " $3 " at " $4 " " $5 " " $6 " " $7}'
+}
+
+# Execute main function
+main 
